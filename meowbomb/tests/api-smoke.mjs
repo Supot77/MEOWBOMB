@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-const url='http://127.0.0.1:8787/api/room';
+const url=(process.env.MEOWBOMB_TEST_URL??'http://localhost:3000')+'/api/room';
 async function call(b){const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)});return {status:r.status,...await r.json()};}
 let a=await call({op:'create',name:'Tester A'});assert(a.token);let b=await call({op:'join',name:'Tester B',code:a.code});assert(b.token);const ta=a.token,tb=b.token;
 async function act(who,token,op,extra={}){const s=await call({op:'state',code:a.code,token});const r=await call({op,code:a.code,token,revision:s.revision,requestId:crypto.randomUUID(),...extra});assert.equal(r.status,200,JSON.stringify(r));return r;}

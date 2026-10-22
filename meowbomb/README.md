@@ -1,46 +1,32 @@
 # MEOWBOMB
 
-Thai multiplayer Original Edition game, 2–5 players. Sources use the publisher's 2025 rules (LONS-202504-79). No expansions or five-different-card combo.
+Thai Original Edition multiplayer card game for 2–5 friends. Built with Next.js, Vercel Functions and Neon PostgreSQL. Current deployment guide: [DEPLOY-VERCEL.md](DEPLOY-VERCEL.md).
 
-## Run locally
+## Run
 
-Requires Node 22.13+ (Node 24 used for verification).
+Node 24 recommended. `npm ci`, copy `.env.example` to `.env.local`, configure the server-only database URL, then `npm run db:migrate` and `npm run dev`. `npm run build` verifies the production Next.js bundle. Do not commit database credentials.
 
-```powershell
-npm run install:ci
-npm run build
-node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0000_foamy_franklin_storm.sql
-npm start
-```
+## Shared Neon database
 
-Apply the migration only once per local database. Open http://127.0.0.1:8787. On Windows where npm.cmd resolves incorrectly, invoke `node 'C:\Program Files\nodejs\node_modules\npm\bin\npm-cli.js'` in place of `npm`.
+MEOWBOMB uses its own `meowbomb` schema. It can share a Neon PostgreSQL database with another app without reusing that app's tables. Resources and permissions are still shared; use separate database roles or databases if stronger isolation is needed. Preview deployments must point to a separate Neon branch. No existing database has been accessed or migrated by this code preparation.
 
-## Code map
+## Code
 
-- `lib/game.ts`: card catalog, setup, turn debt, combos, Nope window, private results and victory.
-- `lib/rooms.ts`: readiness, room lifecycle, sanitized views and session hashing.
-- `app/api/room/route.ts`: D1 persistence, revision checks, command deduplication and authenticated actions.
-- `app/page.tsx`, `app/globals.css`: Thai lobby/table, private choices, hand and responsive presentation.
-- `db/schema.ts`, `drizzle/`: persistent room schema and migrations.
+- `lib/game.ts`: base card catalog, setup, Attack debt, combos, Nope, Defuse, private views and victory.
+- `lib/rooms.ts`: lobby, readiness, reconnect identity, replay and abandonment.
+- `lib/postgres.ts`: server-only pooled pg connection and schema-qualified SQL adapter.
+- `app/api/room/route.ts`: authenticated commands, conditional revision updates and deduplication.
+- `scripts/migrate-neon.mjs`, `db/postgres/0001_rooms.sql`: transactional, versioned migration scoped to `meowbomb`.
+- `app/page.tsx`, `app/globals.css`, `public/art/cards-atlas.png`: original generated cat art, fan-shaped hand and draw/play animations with reduced-motion support.
 
-Eight-second Nope windows are a digital adaptation. Defuse is used automatically when drawing a bomb; its owner chooses the secret insertion position. Ordinary turns have no timeout. Disconnected seats remain reserved; refresh restores the seat in the same tab. Room expiry is 24 hours without authenticated activity. Hidden tabs stop polling; another device cannot recover the same seat.
+## Rules and digital adaptations
+
+Publisher's 2025 Original Edition, LONS-202504-79, 56-card catalog, pairs/triples; no expansions or older five-different-card combo. Eight-second Nope response windows; Defuse automatically used on bomb draw; secret reinsertion choice. Ordinary turns do not time out. Room inactivity expiry is 24 hours. Per-tab reconnection secrets restore seats after refresh. Hidden tabs stop polling, and presence writes are throttled to ten seconds per player.
 
 ## Verification
 
-- `node --test tests/game.test.mjs`: 10 passing tests including 100 complete games and card conservation.
-- `node tests/api-smoke.mjs`: local live API creation/join/start, privacy, authentication, concurrent draw, deduplication and reconnect checks.
-- `node node_modules/typescript/bin/tsc --noEmit`: passed.
-- Production build: passed.
-- Desktop browser: landing and create-room inspected. Further multi-tab/browser testing is recorded in the task handoff.
+`npm test` runs engine scenarios including 100 complete games and card conservation. `npm run typecheck` checks TypeScript. `tests/api-smoke.mjs` is a live API integration check; its default URL must be updated for the active server before use. The prior D1 adapter passed those API checks; these are not proof of Neon connectivity. Production Neon verification requires actual credentials and an initialized schema.
 
-The initial Sites deployment is owner-private. Publishing privately does not grant friends access; sharing permissions must be configured before online friend sessions. Do not describe a local URL as internet-accessible. Mobile CSS exists but a 360px browser viewport has not yet been verified.
+## Legacy deployment files
 
-## Card art and motion (2026-10-22)
-
-Original artwork generated with the built-in imagegen tool is stored in `public/art/cards-atlas.png`. It is one 4×4 atlas: base card types in catalog order, followed by card back, winner and group art. Production prompt: original mischievous cartoon cats, charcoal ink, cream paper, coral/mint/gold/lavender; 16 equal cells; no text, logos or publisher artwork. The CSS samples equal atlas cells without modifying the generated bitmap.
-
-The hand now overlaps and fans around its center; hover, keyboard focus and selection raise a card. Touch selection raises cards and the hand can scroll. Newly received cards animate into the hand, the deck pulses on receipt and a changed discard animates onto the table. Reduced-motion users receive no travel animation. These visual updates do not change rules. Gameplay tests were paused at the user's request; type checking passes after the visual update.
-
-## Deploy to your own Cloudflare account
-
-Recommended hosting: Cloudflare Workers + D1. Follow [DEPLOY-CLOUDFLARE.md](DEPLOY-CLOUDFLARE.md) for first-time sign-in, real database binding, migration, dry-run and publication, plus GitHub-connected build settings. `scripts/cloudflare.mjs` adapts the existing generated bundle; the Sites project identity is preserved. `cf:prepare` refuses an unset production database. Room status checks now write presence at ten-second intervals rather than on every poll. No production deployment has been verified yet.
+The `.openai` identity, Vite/Worker configuration, D1 `drizzle/` migrations and `cf:*` scripts are preserved from the original prototype. They do not configure this Next.js/Vercel deployment. Use only `db/postgres/` migrations with Neon. Prior local Wrangler rooms remain separate.

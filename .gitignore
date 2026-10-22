@@ -10,3 +10,7 @@ meowbomb/outputs/
 .dev.vars*
 
 meowbomb/.cloudflare.local.json
+
+meowbomb/.next/
+meowbomb/next-env.d.ts
+!meowbomb/.env.example

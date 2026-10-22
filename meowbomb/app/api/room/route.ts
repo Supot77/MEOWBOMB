@@ -1,9 +1,11 @@
-import { env } from 'cloudflare:workers';
+import { getRoomDatabase } from '../../../lib/postgres';
+export const runtime='nodejs';
+export const dynamic='force-dynamic';
 import { digest, snapshot, mutate, type Room, type Seat } from '../../../lib/rooms';
 export async function POST(req:Request){
  try{
  if(req.headers.get('origin')&&req.headers.get('origin')!==new URL(req.url).origin)return Response.json({error:'Origin ไม่ถูกต้อง'},{status:403});
- const raw=await req.text();if(raw.length>10000)throw Error('คำสั่งยาวเกินไป');const b=JSON.parse(raw);const db=env.DB;if(!db)throw Error('ฐานข้อมูลยังไม่พร้อม');const now=Date.now();
+ const raw=await req.text();if(raw.length>10000)throw Error('คำสั่งยาวเกินไป');const b=JSON.parse(raw);const db=getRoomDatabase();const now=Date.now();
  if(b.op==='create'||b.op==='join'){
  const name=String(b.name??'').trim().slice(0,24);if(!name)throw Error('กรอกชื่อเล่น');const token=crypto.randomUUID()+crypto.randomUUID();const seat:Seat={id:crypto.randomUUID(),name,avatar:String(b.avatar??'🐈').slice(0,8),hash:await digest(token),ready:false,seen:now};
  if(b.op==='create'){

@@ -16,6 +16,8 @@ export async function POST(req:Request){
  if(b.op!=='state'&&(typeof b.requestId!=='string'||b.requestId.length>80))throw Error('ไม่มีหมายเลขคำสั่ง');
  if(r.requests.includes(b.requestId))return Response.json(snapshot(r,me.id));
  if(b.op!=='state'&&b.revision!==r.revision)return Response.json({...snapshot(r,me.id),error:'สถานะเปลี่ยนแล้ว ลองเลือกอีกครั้ง'},{status:409});
+ // Polls are read-only between presence heartbeats unless a response deadline needs settling.
+ if(b.op==='state'&&now-me.seen<10000&&!(r.game?.phase==='response'&&r.game.pending&&r.game.pending.deadline<=now))return Response.json(snapshot(r,me.id),{headers:{'Cache-Control':'no-store'}});
  const old=r.revision;mutate(r,me.id,b,now);if(b.op!=='state'){r.requests=[...r.requests,b.requestId].slice(-100);}r.revision++;
  const result=await db.prepare('UPDATE rooms SET data=?,revision=?,updated=? WHERE code=? AND revision=?').bind(JSON.stringify(r),r.revision,now,code,old).run();if(!result.meta.changes)return Response.json({error:'สถานะเปลี่ยนแล้ว กรุณาลองใหม่'},{status:409});return Response.json(snapshot(r,me.id));
  }catch(e){return Response.json({error:e instanceof Error?e.message:'คำสั่งไม่สำเร็จ'},{status:400});}

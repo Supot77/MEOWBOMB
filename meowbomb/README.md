@@ -40,3 +40,7 @@ The initial Sites deployment is owner-private. Publishing privately does not gra
 Original artwork generated with the built-in imagegen tool is stored in `public/art/cards-atlas.png`. It is one 4×4 atlas: base card types in catalog order, followed by card back, winner and group art. Production prompt: original mischievous cartoon cats, charcoal ink, cream paper, coral/mint/gold/lavender; 16 equal cells; no text, logos or publisher artwork. The CSS samples equal atlas cells without modifying the generated bitmap.
 
 The hand now overlaps and fans around its center; hover, keyboard focus and selection raise a card. Touch selection raises cards and the hand can scroll. Newly received cards animate into the hand, the deck pulses on receipt and a changed discard animates onto the table. Reduced-motion users receive no travel animation. These visual updates do not change rules. Gameplay tests were paused at the user's request; type checking passes after the visual update.
+
+## Deploy to your own Cloudflare account
+
+Recommended hosting: Cloudflare Workers + D1. Follow [DEPLOY-CLOUDFLARE.md](DEPLOY-CLOUDFLARE.md) for first-time sign-in, real database binding, migration, dry-run and publication, plus GitHub-connected build settings. `scripts/cloudflare.mjs` adapts the existing generated bundle; the Sites project identity is preserved. `cf:prepare` refuses an unset production database. Room status checks now write presence at ten-second intervals rather than on every poll. No production deployment has been verified yet.

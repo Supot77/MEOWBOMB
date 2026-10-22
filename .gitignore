@@ -8,3 +8,5 @@ meowbomb/outputs/
 *.tsbuildinfo
 .env*
 .dev.vars*
+
+meowbomb/.cloudflare.local.json

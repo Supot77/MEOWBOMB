@@ -5,3 +5,5 @@ test('room creation is isolated and conflict safe',()=>assert.equal(roomSql('INS
 test('revision compare-and-set survives conversion',()=>assert.equal(roomSql('UPDATE rooms SET data=?,revision=?,updated=? WHERE code=? AND revision=?'),'UPDATE meowbomb.rooms SET data=$1,revision=$2,updated=$3 WHERE code=$4 AND revision=$5'));
 test('expiry cleanup scopes outer and inner table',()=>assert.equal(roomSql('DELETE FROM rooms WHERE code IN (SELECT code FROM rooms WHERE updated < ? LIMIT 20)'),'DELETE FROM meowbomb.rooms WHERE code IN (SELECT code FROM meowbomb.rooms WHERE updated < $1 LIMIT 20)'));
 test('room reads are namespace qualified',()=>assert.equal(roomSql('SELECT data FROM rooms WHERE code=? AND updated>?'),'SELECT data FROM meowbomb.rooms WHERE code=$1 AND updated>$2'));
+
+test('cleanup rechecks expiry on the outer delete and isolates both table references',()=>assert.equal(roomSql('DELETE FROM rooms WHERE updated<=? AND code IN (SELECT code FROM rooms WHERE updated<=? LIMIT 1000)'),'DELETE FROM meowbomb.rooms WHERE updated<=$1 AND code IN (SELECT code FROM meowbomb.rooms WHERE updated<=$2 LIMIT 1000)'));

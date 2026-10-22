@@ -100,7 +100,7 @@ Poll approximately every 750ms while the table is visible; back off in the lobby
 
 Return only the caller's hand, authorized private prompt, and public table information. Never serialize the hidden deck, opponent card identities, removed hands or reconnection secrets. Generate shuffled decks and random theft server-side with unbiased randomness. Stale private Future results must not survive into a later viewing phase.
 
-Mark presence separately from turn ownership. Rooms expire after 24 hours with no authenticated activity; enforce expiration server-side and perform bounded cleanup. Do not introduce accounts, chat, rankings, bots or expansions into this first release.
+Mark presence separately from turn ownership. Rooms expire after 1 hour with no authenticated activity; enforce expiration server-side and perform bounded cleanup. Do not introduce accounts, chat, rankings, bots or expansions into this first release.
 
 ## Verification and completion criteria
 
@@ -133,3 +133,6 @@ Mark presence separately from turn ownership. Rooms expire after 24 hours with n
 ## Review checkpoint
 
 The user approved the base set. This document makes the technical approach, digital timing choices and completion criteria concrete. The next step is user review of this design, followed by the implementation plan and implementation.
+
+
+Amendment 2026-10-23: user requested one-hour room inactivity expiry and immediate cleanup of existing stale rooms. Authenticated polling counts as continued presence. API expiry is enforced independently from storage garbage collection; a daily authenticated cron is configured for Hobby compatibility. Four stale rooms were removed from meowbomb.rooms; live boundary testing verified that a fresh room is retained, using rolled-back fixtures.

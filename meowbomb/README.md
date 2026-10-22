@@ -21,7 +21,7 @@ MEOWBOMB uses its own `meowbomb` schema. It can share a Neon PostgreSQL database
 
 ## Rules and digital adaptations
 
-Publisher's 2025 Original Edition, LONS-202504-79, 56-card catalog, pairs/triples; no expansions or older five-different-card combo. Eight-second Nope response windows; Defuse automatically used on bomb draw; secret reinsertion choice. Ordinary turns do not time out. Room inactivity expiry is 24 hours. Per-tab reconnection secrets restore seats after refresh. Hidden tabs stop polling, and presence writes are throttled to ten seconds per player.
+Publisher's 2025 Original Edition, LONS-202504-79, 56-card catalog, pairs/triples; no expansions or older five-different-card combo. Eight-second Nope response windows; Defuse automatically used on bomb draw; secret reinsertion choice. Ordinary turns do not time out. Room inactivity expiry is 1 hour after the last saved authenticated contact. Per-tab reconnection secrets restore seats after refresh. Hidden tabs stop polling, and presence writes are throttled to ten seconds per player.
 
 ## Verification
 
@@ -38,3 +38,12 @@ Future viewing update (2026-10-23): `components/game/future-viewer.tsx` renders 
 Pair interaction update (2026-10-23): after the usual Nope window, a two-card combo enters `pair_shuffle`. Only its target may shuffle their hand or confirm readiness. Then `pair_pick` locks that order and exposes only a slot count to the attacker; the attacker uses the same centered swipeable hand with backs and double-tap confirmation. No target card IDs or identities are serialized to that attacker. Only the attacker can pick a valid slot, exactly once. Empty target hands resolve immediately. Triple combos retain named-card transfer or loss with an explicit result log. Existing room JSON needs no database migration. Regression tests cover authorization, secrecy, invalid/duplicate picks, Nope cancellation, empty hands, and triple success/failure.
 
 Combo navigation fix (2026-10-23): dragging, arrow keys and previous/next buttons now retain selected card IDs in combo mode. Previously each navigation path called onSelect([]), which erased the first card before a distant matching card could be chosen. Single-card browsing still clears the raised preview as before. Keyboard activation also resets the stale drag suppression flag. TypeScript passed; device-touch confirmation is pending the deployed update.
+
+
+Room expiry update (2026-10-23): rooms reject access at exactly one hour since last persisted authenticated activity (including heartbeats). Expired reads return ROOM_EXPIRED/410, clear the browser seat and stop polling the dead room. Create-room traffic removes expired rows in batches of up to 1000, and access to a particular expired room removes that row. Conditional cleanup rechecks the timestamp to protect recently refreshed rooms. `app/api/cron/cleanup/route.ts` provides Bearer-secret authentication, fails closed without CRON_SECRET, and sweeps expired rows daily via Vercel Cron (20:00 UTC / 04:00 Singapore). Hobby supports daily jobs only; logical one-hour expiry is enforced separately on every API request. Actual deletion can occur later when no requests arrive. Use a more frequent authorized scheduler if tighter physical deletion is required.
+
+One-time live cleanup: inspected 4 rooms, all older than one hour with zero recent rooms; deleted 4 from meowbomb.rooms and confirmed zero remained immediately afterward. No other schema was targeted. `npm run db:cleanup` is an expired-only manual sweep. A random CRON_SECRET was generated in ignored .env.local; copy it into Vercel Production environment variables and redeploy for scheduled cleanup to authenticate. No value was printed or committed. Expiry-boundary and safe-SQL tests pass (22 tests total); remote cron execution remains unverified until configuration/deployment.
+
+Live Neon regression: an isolated transaction inserted expired and fresh fixtures, removed only the expired one at the exact one-hour boundary, verified that the fresh one survived, then rolled back every fixture change.
+
+Production build passed. Local HTTP verification of /api/cron/cleanup rejected absent/wrong authorization (401) and accepted the configured local secret (200). This does not establish that Vercel Production has that secret yet.

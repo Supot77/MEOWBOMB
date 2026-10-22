@@ -1,0 +1,4 @@
+export const ROOM_IDLE_MS = 60 * 60 * 1000;
+export const ROOM_EXPIRED_MESSAGE = 'ห้องนี้ปิดแล้ว เนื่องจากไม่มีผู้เล่นเชื่อมต่อครบ 1 ชั่วโมง กรุณาสร้างห้องใหม่';
+export function roomCutoff(now = Date.now()) { return now - ROOM_IDLE_MS; }
+export function roomExpired(updated: number, now = Date.now()) { return updated <= roomCutoff(now); }

@@ -1,9 +1,11 @@
+import { ROOM_IDLE_MS, roomExpired, ROOM_EXPIRED_MESSAGE } from './room-expiry';
 import { createGame, command, settle, view, type Game, type Input } from './game';
 export type Seat={id:string;name:string;avatar:string;hash:string;ready:boolean;seen:number};
 export type Room={code:string;revision:number;host:string;players:Seat[];game:Game|null;requests:string[];votes:string[];updated:number};
 export async function digest(s:string){return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s)))).map(b=>b.toString(16).padStart(2,'0')).join('');}
-export function snapshot(r:Room,id:string){return {code:r.code,revision:r.revision,host:r.host,playerId:id,players:r.players.map(({hash,...p})=>({...p,connected:Date.now()-p.seen<20000})),game:r.game?view(r.game,id):null,votes:r.votes};}
+export function snapshot(r:Room,id:string){return {code:r.code,expiresAt:r.updated+ROOM_IDLE_MS,revision:r.revision,host:r.host,playerId:id,players:r.players.map(({hash,...p})=>({...p,connected:Date.now()-p.seen<20000})),game:r.game?view(r.game,id):null,votes:r.votes};}
 export function mutate(r:Room,id:string,body:{op:string;input?:Input;ready?:boolean},now=Date.now()){
+ if(roomExpired(r.updated,now))throw Error(ROOM_EXPIRED_MESSAGE);
  const me=r.players.find(p=>p.id===id);if(!me)throw Error('ไม่พบที่นั่ง');me.seen=now;r.updated=now;
  if(r.game)r.game=settle(r.game,now);
  switch(body.op){

@@ -19,7 +19,8 @@
     "cf:check": "node scripts/cloudflare.mjs check",
     "db:migrate": "node --env-file-if-exists=.env.local scripts/migrate-neon.mjs",
     "test": "node --conditions=react-server --test tests/*.test.mjs",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "db:cleanup": "node --env-file-if-exists=.env.local scripts/cleanup-expired-rooms.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",

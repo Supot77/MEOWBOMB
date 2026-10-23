@@ -1,0 +1,2 @@
+export function reconcileOrder(order:string[],ids:string[]){const allowed=new Set(ids);return [...new Set(order.filter(id=>allowed.has(id))),...ids.filter(id=>!order.includes(id))];}
+export function moveCard(order:string[],index:number,direction:-1|1){const next=index+direction;if(index<0||index>=order.length||next<0||next>=order.length)return [...order];const result=[...order];[result[index],result[next]]=[result[next],result[index]];return result;}
